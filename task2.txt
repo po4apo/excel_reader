@@ -1,0 +1,47 @@
+-- Первое задание
+update students
+set passed = 1
+WHERE id in (SELECT student_id
+				FROM exams
+                group by student_id
+                having sum(score)> 36);
+
+-- Второе задание
+select student_id, period, exam
+from exams
+where period = 2
+  and year = 2021
+  and (score = 4 or score = 5);
+
+-- Третье задание
+-- Годовая оценка - оценка последнеего периода в каждом году
+select *
+from exams
+where (student_id, year, exam, period)
+        in (select  student_id, year, exam, max(period)
+            from exams
+            group by student_id,exam, year);
+
+-- Годовая оценка - последняя оценка по предмету за все время обучения, то есть за последний год
+select *
+from
+(select *
+from exams
+where (student_id, year, exam, period)
+        in (select  student_id, year, exam, max(period)
+            from exams
+            group by student_id,exam, year)) as every_last_period
+right join
+(select student_id, exam, max(year) as year
+from (
+     select *
+     from exams
+     where (student_id, year, exam, period)
+        in (select  student_id, year, exam, max(period)
+            from exams
+            group by student_id,exam, year)
+         ) as max_period
+group by student_id, exam) as every_last_year
+    on every_last_year.student_id=every_last_period.student_id
+           and every_last_year.exam = every_last_period.exam
+           and every_last_year.year =every_last_period.year
